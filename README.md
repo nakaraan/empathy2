@@ -1,4 +1,4 @@
-# 🤖 EMPATHY2: Advanced Empathetic AI Chatbot
+# EMPATHY2: Advanced Empathetic AI Chatbot
 
 **Authors**  
 - ALMIN, Wesner III  
@@ -8,14 +8,14 @@
 
 ---
 
-## 📌 Overview
+## Overview
 **empathy_chatbot.py** is an advanced AI chatbot system that combines text-based emotion detection with empathetic response generation. Using state-of-the-art transformer models and multi-layered fallback systems, it provides compassionate, contextually-aware conversations for mental health support and emotional understanding.
 
 The system uses **Twitter RoBERTa multi-label classification**, **keyword-based emotion detection**, and **crisis intervention protocols** to deliver research-backed empathetic responses.
 
 ---
 
-## 🌟 Features
+## Features
 
 - **Advanced Emotion Detection**: Uses Twitter RoBERTa multi-label model for high accuracy
 - **Alternative Emotions**: Detects multiple emotions simultaneously with confidence scoring
@@ -28,7 +28,7 @@ The system uses **Twitter RoBERTa multi-label classification**, **keyword-based 
 
 ---
 
-## 📂 Supported Emotions
+## Supported Emotions
 **Primary Classifications:**
 - **Joy/Happiness** - Celebrations, achievements, positive experiences
 - **Sadness** - Grief, loss, disappointment, loneliness  
@@ -46,7 +46,7 @@ The system uses **Twitter RoBERTa multi-label classification**, **keyword-based 
 
 ---
 
-## 🧠 Models & Architecture
+## Models & Architecture
 
 ### Primary Model
 - **[Twitter RoBERTa Multi-Label](https://huggingface.co/cardiffnlp/twitter-roberta-base-emotion-multilabel-latest):** State-of-the-art transformer model trained on Twitter data for emotion classification
@@ -67,7 +67,7 @@ The system uses **Twitter RoBERTa multi-label classification**, **keyword-based 
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Prerequisites
 - **Python 3.7+** (Python 3.8+ recommended)
@@ -122,26 +122,26 @@ python empathy_chatbot.py
 
 ---
 
-## 📦 Complete Dependencies
+## Complete Dependencies
 
 | Package | Purpose | Critical? | Version Notes |
 |---------|---------|-----------|---------------|
-| **torch** | PyTorch framework | ✅ CRITICAL | Latest stable (2.0+) |
-| **transformers** | HuggingFace models | ✅ CRITICAL | 4.35.0+ |
-| **tokenizers** | Fast tokenization | ✅ CRITICAL | Auto-installed |
-| **accelerate** | Hardware optimization | ✅ CRITICAL | Model loading |
-| **huggingface-hub** | Model repository | ✅ CRITICAL | Model downloads |
-| **safetensors** | Safe serialization | ✅ CRITICAL | Modern format |
-| **numpy** | Numerical operations | ✅ CRITICAL | 1.21.0+ |
-| **requests** | HTTP requests | ✅ CRITICAL | Model downloads |
-| **regex** | Text processing | ✅ CRITICAL | Pattern matching |
-| **pip-keras** | Keras integration | ⚠️ IMPORTANT | Model compatibility |
-| **scipy** | Scientific computing | ⚠️ IMPORTANT | Advanced operations |
-| **psutil** | System monitoring | 🔄 OPTIONAL | Performance tracking |
+| **torch** | PyTorch framework | CRITICAL | Latest stable (2.0+) |
+| **transformers** | HuggingFace models | CRITICAL | 4.35.0+ |
+| **tokenizers** | Fast tokenization | CRITICAL | Auto-installed |
+| **accelerate** | Hardware optimization | CRITICAL | Model loading |
+| **huggingface-hub** | Model repository | CRITICAL | Model downloads |
+| **safetensors** | Safe serialization | CRITICAL | Modern format |
+| **numpy** | Numerical operations | CRITICAL | 1.21.0+ |
+| **requests** | HTTP requests | CRITICAL | Model downloads |
+| **regex** | Text processing | CRITICAL | Pattern matching |
+| **pip-keras** | Keras integration | IMPORTANT | Model compatibility |
+| **scipy** | Scientific computing | IMPORTANT | Advanced operations |
+| **psutil** | System monitoring | OPTIONAL | Performance tracking |
 
 ---
 
-## 🎯 Usage Examples
+## Usage Examples
 
 ### Basic Conversation
 ```
@@ -180,14 +180,13 @@ takes courage to face your fears.
 
 📞 National Suicide Prevention Lifeline: 988
 💬 Crisis Text Line: Text HOME to 741741
-🌐 International: befrienders.org
 
 You matter, and there are people who want to support you.
 ```
 
 ---
 
-## 🔧 Commands & Features
+## Commands & Features
 
 ### Interactive Commands
 - **help** - Show available commands and usage tips
@@ -205,7 +204,7 @@ You matter, and there are people who want to support you.
 
 ---
 
-## 🔧 Platform-Specific Setup
+## Platform-Specific Setup
 
 ### Windows
 ```bash
@@ -231,7 +230,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 ---
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Common Installation Issues
 
@@ -260,7 +259,7 @@ pip install --trusted-host pypi.org --trusted-host pypi.python.org torch transfo
 
 ---
 
-## 📊 Performance Metrics
+## Performance Metrics
 
 - **Emotion Detection Accuracy:** ~89% (RoBERTa model)
 - **Response Time:** 1-3 seconds per message
@@ -271,7 +270,7 @@ pip install --trusted-host pypi.org --trusted-host pypi.python.org torch transfo
 
 ---
 
-## 🔒 Safety & Ethics
+## Safety & Ethics
 
 ### Crisis Intervention
 - **Real-time Monitoring:** Continuous scanning for self-harm language
@@ -290,7 +289,7 @@ pip install --trusted-host pypi.org --trusted-host pypi.python.org torch transfo
 
 ---
 
-## 🧪 Testing & Validation
+## Testing & Validation
 
 ### Automated Testing
 ```bash
@@ -319,7 +318,7 @@ for case in test_cases:
 
 ---
 
-## 🎓 Research & References
+## Research & References
 
 ### Emotion Detection Models
 - **RoBERTa Architecture:** Liu et al. (2019) - Robustly Optimized BERT Pretraining Approach
@@ -343,24 +342,25 @@ pip install -r requirements-dev.txt
 ```
 ---
 
-**🎯 Built with ❤️ for mental health awareness, AI education, and empathetic computing.**
+**Built with care for mental health awareness, AI education, and empathetic computing.**
 
 ---
 
-## 📋 Quick Setup Checklist
+## Quick Setup Checklist
 
 - [ ] Python 3.7+ installed (`python --version`)
 - [ ] Virtual environment created (`python -m venv venv`)
 - [ ] Environment activated (`venv\Scripts\activate` or `source venv/bin/activate`)
 - [ ] Dependencies installed (`pip install torch transformers tokenizers accelerate...`)
-- [ ] Installation verified (`python -c "import torch, transformers; print('✅ Ready!')"`)
+- [ ] Installation verified (`python -c "import torch, transformers; print('Ready!')"`)
 - [ ] Chatbot tested (`python empathy_chatbot.py`)
 - [ ] Demo run successful (`demo` command in chatbot)
 
-**✅ First successful conversation indicates everything is working correctly!**
+**First successful conversation indicates everything is working correctly!**
 
+---
 
-### 📄 AI Disclosure Statement
+## AI Disclosure Statement
 In accordance with De La Salle University's Policies on Generative Artificial Intelligence in Higher Education: This README document was created with the assistance of generative AI tools (specifically Github Copilot) to enhance writing clarity, structure, and comprehensiveness. The AI was used for content organization, writing enhancement, template generation, and ensuring comprehensive coverage of installation requirements and troubleshooting steps.
 
 All technical content, code examples, research references, and core information were human-authored and validated. The authors maintain full accountability for the accuracy and completeness of all information presented. Human oversight was exercised throughout the document creation process to ensure alignment with educational objectives and factual correctness. This disclosure is provided in compliance with DLSU's principles of transparency and accountability in generative AI use for academic materials.
