@@ -1,0 +1,94 @@
+{
+  "sad": {
+    "acknowledge": [
+      "I'm really sorry you're feeling this way.",
+      "That sounds incredibly difficult to deal with.",
+      "I can hear the pain in your message.",
+      "Those feelings sound really heavy to carry.",
+      "I'm sorry you're going through such a tough time."
+    ],
+    "support": [
+      "Would you like to talk about what's contributing to these feelings?",
+      "Sometimes it helps to take things one moment at a time.",
+      "Have you been able to reach out to someone you trust?",
+      "Would a brief breathing exercise help right now?",
+      "Is there anything small that might bring you a bit of comfort today?"
+    ],
+    "reinforce": [
+      "It takes courage to share how you're feeling.",
+      "You're not alone in this, even when it feels that way.",
+      "Your feelings are valid and understandable.",
+      "You've made it through difficult times before.",
+      "Reaching out shows real strength."
+    ]
+  },
+  "happy": {
+    "acknowledge": [
+      "That's wonderful to hear! I can feel your joy.",
+      "You sound absolutely delighted - that's amazing!",
+      "What fantastic news! Your happiness is contagious.",
+      "I love hearing such positive energy from you!",
+      "That sounds like such a bright moment in your day!"
+    ],
+    "support": [
+      "Tell me more about what made this so special!",
+      "What was the best part of this experience?",
+      "I'd love to hear all the details!",
+      "How are you planning to celebrate?",
+      "What does this mean to you?"
+    ],
+    "reinforce": [
+      "You absolutely deserve this happiness!",
+      "It's beautiful to see you so joyful.",
+      "These are the moments worth savoring.",
+      "Your excitement is truly heartwarming.",
+      "Keep embracing these wonderful feelings!"
+    ]
+  },
+  "stressed": {
+    "acknowledge": [
+      "I can really feel the stress in your message.",
+      "That sounds incredibly overwhelming right now.",
+      "It sounds like you're carrying a lot on your shoulders.",
+      "I can understand why you'd feel so pressured.",
+      "That level of stress must be exhausting."
+    ],
+    "support": [
+      "Let's try breaking this down into smaller, manageable pieces.",
+      "Would a quick grounding exercise help you feel more centered?",
+      "What feels like the most urgent thing to address first?",
+      "Sometimes taking just 5 deep breaths can help reset your mind.",
+      "Is there one small step you could take right now to feel more in control?"
+    ],
+    "reinforce": [
+      "You're handling so much - that shows real resilience.",
+      "It's smart to recognize when you're feeling overwhelmed.",
+      "You've managed stressful situations before and found your way through.",
+      "Taking time to acknowledge your stress is actually a healthy first step.",
+      "You don't have to figure everything out all at once."
+    ]
+  },
+  "neutral": {
+    "acknowledge": [
+      "I'm here to listen and support you.",
+      "Thank you for sharing with me.",
+      "I appreciate you taking the time to talk.",
+      "How are you feeling right now?",
+      "I'm glad you're here to chat."
+    ],
+    "support": [
+      "What's on your mind today?",
+      "Is there anything particular you'd like to talk about?",
+      "How has your day been treating you?",
+      "What would be most helpful for you right now?",
+      "I'm here if you need someone to listen."
+    ],
+    "reinforce": [
+      "Your thoughts and feelings matter.",
+      "It's good that you're taking time for yourself.",
+      "You're doing great by checking in with yourself.",
+      "I'm grateful you chose to share with me.",
+      "You deserve care and support."
+    ]
+  }
+}
