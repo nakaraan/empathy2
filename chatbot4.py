@@ -6,43 +6,39 @@ import os
 
 app = Flask(__name__)
 
-# Import transformers, fallback to simple sentiment if not available
-print("[+] Loading Twitter RoBERTa emotion detection model...")
+# Import tweetnlp for emotion detection, fallback to simple sentiment if not available
+print("[+] Loading TweetNLP emotion detection model...")
 
 try: 
-    from transformers import pipeline
-    HF_AVAILABLE = True
+    import tweetnlp
+    TWEETNLP_AVAILABLE = True
     
-    # Using Twitter RoBERTa model for better social media/conversational emotion detection
-    emotion_classifier = pipeline(
-        "text-classification",
-        model="cardiffnlp/twitter-roberta-base-emotion",
-        top_k=1
-    )
-    print("[+] Twitter RoBERTa emotion model loaded successfully!")
+    # Using TweetNLP model for better multi-label emotion detection
+    emotion_model = tweetnlp.load_model('topic_classification', model_name='cardiffnlp/twitter-roberta-base-emotion-multilabel-latest')
+    print("[+] TweetNLP emotion model loaded successfully!")
     
-    # The model outputs: joy, optimism, anger, sadness, fear, surprise, love, anticipation, trust, disgust, pessimism
-    ROBERTA_EMOTIONS = ['joy', 'optimism', 'anger', 'sadness', 'fear', 'surprise', 'love', 'anticipation', 'trust', 'disgust', 'pessimism']
+    # The model outputs all emotions with scores: anger, anticipation, disgust, fear, joy, love, optimism, pessimism, sadness, surprise, trust
+    TWEETNLP_EMOTIONS = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'love', 'optimism', 'pessimism', 'sadness', 'surprise', 'trust']
     
 except ImportError as e:
-    HF_AVAILABLE = False
-    print(f"[ERROR] HuggingFace transformers not available: {e}")
-    print("[INFO] Please install transformers with: pip install transformers torch")
+    TWEETNLP_AVAILABLE = False
+    print(f"[ERROR] TweetNLP not available: {e}")
+    print("[INFO] Please install tweetnlp with: pip install tweetnlp")
     print("[FALLBACK] Reverting to simple keyword-based sentiment analysis")
-    emotion_classifier = None
-    ROBERTA_EMOTIONS = []
+    emotion_model = None
+    TWEETNLP_EMOTIONS = []
 except Exception as e:
-    HF_AVAILABLE = False
-    print(f"[ERROR] Failed to load Twitter RoBERTa model: {e}")
+    TWEETNLP_AVAILABLE = False
+    print(f"[ERROR] Failed to load TweetNLP model: {e}")
     print(f"[ERROR] Error type: {type(e).__name__}")
     print("[POSSIBLE CAUSES]:")
     print("  - Internet connection required for first-time model download")
     print("  - Insufficient disk space for model files (~500MB)")
     print("  - PyTorch not installed: pip install torch")
-    print("  - Transformers version incompatibility: pip install --upgrade transformers")
+    print("  - TweetNLP version incompatibility: pip install --upgrade tweetnlp")
     print("[FALLBACK] Using keyword-based emotion detection")
-    emotion_classifier = None
-    ROBERTA_EMOTIONS = []
+    emotion_model = None
+    TWEETNLP_EMOTIONS = []
 
 def load_templates():
     templates_file = os.path.join(os.path.dirname(__file__), 'templates.json')
@@ -86,6 +82,21 @@ def load_templates():
                 "support": ["What's fueling this positive energy?", "Share more about what's got you feeling hopeful!", "Your optimism might inspire others too!"],
                 "reinforce": ["Your positive attitude is a strength.", "Optimism can be a powerful force.", "Keep nurturing that hopeful spirit!"]
             },
+            "anticipation": {
+                "acknowledge": ["I can feel your excitement!", "That anticipation is palpable!", "Looking forward to something special?"],
+                "support": ["Tell me more about what you're anticipating!", "What's got you feeling this way?", "Share your excitement with me!"],
+                "reinforce": ["Anticipation can be such a wonderful feeling.", "It's beautiful to have something to look forward to.", "Your excitement is contagious!"]
+            },
+            "trust": {
+                "acknowledge": ["That trust is precious.", "What a meaningful connection.", "Trust is such a valuable emotion."],
+                "support": ["Tell me about this trust you're feeling.", "What makes you feel so confident?", "That's a beautiful foundation to build on."],
+                "reinforce": ["Trust is one of life's greatest gifts.", "You deserve trustworthy connections.", "That faith in others is admirable."]
+            },
+            "surprise": {
+                "acknowledge": ["What a surprise!", "I can feel your amazement!", "That must have been unexpected!"],
+                "support": ["Tell me more about what surprised you!", "How did that make you feel?", "Share the details of this surprise!"],
+                "reinforce": ["Life's surprises can be wonderful.", "It's great to stay open to the unexpected.", "Surprises add excitement to life!"]
+            },
             "neutral": {
                 "acknowledge": ["I'm here to listen.", "Thank you for sharing with me.", "Your thoughts matter."],
                 "support": ["What's on your mind today?", "How are you feeling right now?", "Is there anything you'd like to explore?"],
@@ -93,27 +104,49 @@ def load_templates():
             }
         }
 
-# Enhanced keyword detection for Twitter RoBERTa emotions
+# Enhanced keyword detection for TweetNLP emotions
 EMOTION_KEYWORDS = {
-    "sad": ["sad", "depressed", "down", "cry", "crying", "hurt", "pain", "alone", "lonely", "worthless", "empty", "hopeless"],
-    "happy": ["happy", "joy", "excited", "great", "amazing", "wonderful", "love", "perfect", "awesome", "fantastic", "thrilled"],
-    "stressed": ["stress", "stressed", "anxious", "worry", "worried", "overwhelmed", "panic", "nervous", "pressure", "deadline", "tense"],
-    "angry": ["angry", "mad", "furious", "irritated", "annoyed", "frustrated", "rage", "pissed", "livid", "outraged"],
-    "fearful": ["scared", "afraid", "terrified", "frightened", "anxious", "worried", "nervous", "panic", "dread", "fear"],
+    "sadness": ["sad", "depressed", "down", "cry", "crying", "hurt", "pain", "alone", "lonely", "worthless", "empty", "hopeless"],
+    "joy": ["happy", "joy", "excited", "great", "amazing", "wonderful", "perfect", "awesome", "fantastic", "thrilled"],
+    "anger": ["angry", "mad", "furious", "irritated", "annoyed", "frustrated", "rage", "pissed", "livid", "outraged"],
+    "fear": ["scared", "afraid", "terrified", "frightened", "anxious", "worried", "nervous", "panic", "dread", "fear"],
     "love": ["love", "adore", "cherish", "treasure", "devoted", "affection", "romantic", "heart", "beloved", "darling"],
-    "optimistic": ["hopeful", "positive", "optimistic", "confident", "bright", "encouraging", "upbeat", "promising", "cheerful"],
-    "surprised": ["surprised", "shocked", "amazed", "astonished", "stunned", "unexpected", "wow", "incredible", "unbelievable"]
+    "optimism": ["hopeful", "positive", "optimistic", "confident", "bright", "encouraging", "upbeat", "promising", "cheerful"],
+    "surprise": ["surprised", "shocked", "amazed", "astonished", "stunned", "unexpected", "wow", "incredible", "unbelievable"],
+    "anticipation": ["anticipating", "expecting", "looking forward", "awaiting", "excited about", "can't wait", "upcoming", "future"],
+    "trust": ["trust", "reliable", "dependable", "faith", "confidence", "believe in", "count on", "secure"],
+    "disgust": ["disgusting", "revolting", "repulsive", "gross", "sick", "nauseating", "appalling", "vile"],
+    "pessimism": ["pessimistic", "negative", "doubtful", "hopeless", "gloomy", "despairing", "bleak", "dark"]
 }
 
-# Crisis keywords for safety
+# Enhanced crisis keywords for safety
 CRISIS_KEYWORDS = [
-    'suicide', 'kill', 'end it all', 'hurt myself', 
-    'die', 'not worth living', 'end my life', 'kms'
-    'self harm', 'cut myself', 'overdose', 'jump off'
+    # Direct suicidal ideation
+    'suicide', 'kill myself', 'end it all', 'hurt myself', 
+    'die', 'not worth living', 'want to die', 'end my life',
+    'self harm', 'cut myself', 'overdose', 'jump off',
+    'take my own life', 'commit suicide', 'suicidal thoughts',
+    'better off dead', 'wish I was dead', 'want to be dead',
+    
+    # Self-harm expressions
+    'self injury', 'cutting myself', 'burning myself',
+    'hitting myself', 'self abuse', 'self punishment',
+    
+    # Hopelessness indicators
+    'no point in living', 'life has no meaning', 'everything is hopeless',
+    'nothing matters anymore', 'give up on life', 'life is pointless',
+    'no reason to continue', 'tired of existing', 'done with everything',
+    
+    # Method-specific
+    'pills to die', 'hanging myself', 'bridge jumping',
+    'slit my wrists', 'razor blade', 'poison myself',
+    
+    # Shortened versions
+    'kms', 'kys', 'end me', 'checking out', 'logging off forever'
 ]
 
 def detect_emotion_simple(text):
-    """Enhanced keyword-based emotion detection for Twitter RoBERTa emotions"""
+    """Enhanced keyword-based emotion detection for TweetNLP emotions"""
     text_lower = text.lower()
     emotion_scores = {}
     
@@ -126,45 +159,73 @@ def detect_emotion_simple(text):
         # Return emotion with highest score
         best_emotion = max(emotion_scores.items(), key=lambda x: x[1])
         confidence = min(best_emotion[1] * 0.25, 0.85)  # More conservative confidence
-        return {"label": best_emotion[0], "score": confidence}
+        return {
+            "primary_emotion": best_emotion[0], 
+            "confidence": confidence,
+            "all_emotions": [{"label": best_emotion[0], "score": confidence}]
+        }
     else:
-        return {"label": "neutral", "score": 0.5}
+        return {
+            "primary_emotion": "neutral", 
+            "confidence": 0.5,
+            "all_emotions": [{"label": "neutral", "score": 0.5}]
+        }
     
 def detect_emotion(text):
-    """Detect emotion using Twitter RoBERTa model"""
-    if HF_AVAILABLE and emotion_classifier:
+    """Detect emotion using TweetNLP model with multi-label support"""
+    if TWEETNLP_AVAILABLE and emotion_model:
         try:
-            # The pipeline returns a nested list structure
-            results = emotion_classifier(text)
+            # Get predictions from TweetNLP model
+            results = emotion_model.predict(text)
             
-            # Handle nested list structure: [[{'label': 'joy', 'score': 0.699}]]
-            if isinstance(results, list) and len(results) > 0:
-                # Check if it's a nested list
-                if isinstance(results[0], list) and len(results[0]) > 0:
-                    result = results[0][0]  # Get first result from nested list
+            # TweetNLP returns format like: {'label': ['joy', 'optimism']}
+            # But we need the detailed scores, so let's get the raw prediction
+            raw_results = emotion_model.predict(text, return_probability=True)
+            
+            # Handle different return formats
+            if isinstance(raw_results, dict):
+                if 'label' in raw_results and 'probability' in raw_results:
+                    # Format: {'label': ['joy', 'optimism'], 'probability': [0.88, 0.98]}
+                    labels = raw_results['label']
+                    probs = raw_results['probability']
+                    all_emotions = [{"label": label, "score": prob} for label, prob in zip(labels, probs)]
+                elif 'probabilities' in raw_results:
+                    # Alternative format with all emotion probabilities
+                    all_emotions = [{"label": emotion, "score": score} 
+                                  for emotion, score in raw_results['probabilities'].items()]
                 else:
-                    result = results[0]  # Get first result from simple list
+                    # Fallback: just use the labels with estimated scores
+                    labels = raw_results.get('label', [])
+                    all_emotions = [{"label": label, "score": 0.7} for label in labels]
             else:
-                result = results
+                # If raw_results is just the simple format, estimate from basic prediction
+                basic_results = emotion_model.predict(text)
+                labels = basic_results.get('label', []) if isinstance(basic_results, dict) else []
+                all_emotions = [{"label": label, "score": 0.7} for label in labels]
             
-            # Extract label and score
-            detected_emotion = result['label'].lower()
-            confidence = round(result['score'], 3)
+            if not all_emotions:
+                # If no emotions detected, fallback
+                all_emotions = [{"label": "neutral", "score": 0.5}]
+            
+            # Sort by confidence and get primary emotion
+            all_emotions.sort(key=lambda x: x['score'], reverse=True)
+            primary_emotion = all_emotions[0]['label']
+            primary_confidence = all_emotions[0]['score']
             
             return {
-                "label": detected_emotion,
-                "score": confidence,
-                "model": "twitter-roberta"
+                "primary_emotion": primary_emotion,
+                "confidence": round(primary_confidence, 3),
+                "all_emotions": all_emotions,
+                "model": "tweetnlp"
             }
+            
         except Exception as e:
-            print(f"Error in Twitter RoBERTa emotion detection: {e}")
-            print(f"Raw result type: {type(emotion_classifier(text))}")
-            print(f"Raw result: {emotion_classifier(text)}")
+            print(f"Error in TweetNLP emotion detection: {e}")
+            print(f"Falling back to keyword detection...")
             fallback_result = detect_emotion_simple(text)
             fallback_result["model"] = "keyword-fallback"
             return fallback_result
     else:
-        print("[yikes]")
         fallback_result = detect_emotion_simple(text)
         fallback_result["model"] = "keyword-fallback"
         return fallback_result
@@ -175,7 +236,7 @@ def check_crisis(text):
     return any(keyword in text_lower for keyword in CRISIS_KEYWORDS)
 
 def select_response(emotion_data, user_message, templates):
-    """Select appropriate empathic response based on Twitter RoBERTa emotions"""
+    """Select appropriate empathic response based on TweetNLP emotions"""
     
     # Crisis intervention takes priority
     if check_crisis(user_message):
@@ -187,61 +248,75 @@ def select_response(emotion_data, user_message, templates):
                        "🏥 Emergency Services: 911\n\n" +
                        "You matter, and there are people who want to support you. Please don't hesitate to reach out.",
             "type": "crisis_intervention",
-            "emotion": emotion_data["label"],
-            "confidence": emotion_data["score"]
+            "emotion": emotion_data["primary_emotion"],
+            "confidence": emotion_data["confidence"],
+            "all_emotions": emotion_data.get("all_emotions", [])
         }
     
-    emotion = emotion_data["label"]
-    confidence = emotion_data["score"]
+    primary_emotion = emotion_data["primary_emotion"]
+    confidence = emotion_data["confidence"]
+    all_emotions = emotion_data.get("all_emotions", [])
     
-    # Enhanced mapping for Twitter RoBERTa emotions to template categories
+    # Enhanced mapping for TweetNLP emotions to template categories
     emotion_mapping = {
-        # Direct mappings
+        # Direct mappings to existing templates
         "sadness": "sad",
         "joy": "happy",
         "anger": "angry",
         "fear": "fearful",
         "love": "love",
         "optimism": "optimistic",
+        "anticipation": "anticipation",
+        "trust": "trust",
+        "surprise": "surprise",
         
         # Complex mappings
-        "surprise": "happy",  # Treat surprise as generally positive
-        "anticipation": "optimistic",  # Forward-looking emotion
-        "trust": "love",  # Positive relationship emotion
-        "disgust": "angry",  # Negative reactive emotion
-        "pessimism": "sad",  # Negative outlook
+        "disgust": "angry",  # Treat disgust as a form of anger
+        "pessimism": "sad",  # Treat pessimism as sadness
         
         # Fallbacks for keyword detection
-        "stressed": "stressed",
         "happy": "happy",
         "sad": "sad",
-        "fearful": "fearful"
+        "fearful": "fearful",
+        "stressed": "stressed"
     }
     
-    mapped_emotion = emotion_mapping.get(emotion, "neutral")
+    mapped_emotion = emotion_mapping.get(primary_emotion, "neutral")
     
     # Use mapped emotion if it exists in templates
     if mapped_emotion in templates:
         emotion_key = mapped_emotion
-    elif emotion in templates:
-        emotion_key = emotion
+    elif primary_emotion in templates:
+        emotion_key = primary_emotion
     else:
         emotion_key = "neutral"
     
-    # Adjust confidence thresholds for Twitter RoBERTa (generally more confident)
-    confidence_threshold = 0.4 if emotion_data.get("model") == "twitter-roberta" else 0.6
+    # Adjust confidence thresholds for TweetNLP (generally more reliable)
+    confidence_threshold = 0.3 if emotion_data.get("model") == "tweetnlp" else 0.6
     
     # Select response strategy based on confidence
     if confidence > confidence_threshold:
         # High confidence - use specific empathic response
         strategies = templates[emotion_key]
         
-        # Combine all three strategies for full empathic response
+        # Consider secondary emotions for more nuanced responses
+        secondary_emotions = [e for e in all_emotions[1:3] if e['score'] > 0.3]
+        
+        # Combine strategies for full empathic response
         acknowledge = random.choice(strategies["acknowledge"])
         support = random.choice(strategies["support"]) 
         reinforce = random.choice(strategies["reinforce"])
         
         response = f"{acknowledge} {support} {reinforce}"
+        
+        # Add secondary emotion acknowledgment if present
+        if secondary_emotions and len(secondary_emotions) > 0:
+            secondary_emotion = secondary_emotions[0]['label']
+            secondary_mapped = emotion_mapping.get(secondary_emotion, secondary_emotion)
+            if secondary_mapped in templates and secondary_mapped != emotion_key:
+                secondary_acknowledge = random.choice(templates[secondary_mapped]["acknowledge"])
+                response += f" I also sense some {secondary_emotion} - {secondary_acknowledge.lower()}"
+        
     else:
         # Lower confidence - use neutral supportive response
         response = random.choice(templates["neutral"]["acknowledge"])
@@ -249,10 +324,12 @@ def select_response(emotion_data, user_message, templates):
     return {
         "response": response,
         "type": "empathic",
-        "emotion": emotion,
+        "emotion": primary_emotion,
         "confidence": confidence,
         "mapped_emotion": emotion_key,
-        "model_used": emotion_data.get("model", "unknown")
+        "model_used": emotion_data.get("model", "unknown"),
+        "all_emotions": all_emotions,
+        "secondary_emotions": [e for e in all_emotions[1:3] if e['score'] > 0.3]
     }
 
 # Flask routes for web interface
@@ -274,7 +351,7 @@ def chat():
         # Load templates
         templates = load_templates()
         
-        # Detect emotion using Twitter RoBERTa
+        # Detect emotion using TweetNLP
         emotion_data = detect_emotion(user_message)
         
         # Generate response
@@ -287,6 +364,8 @@ def chat():
             "response_type": response_data["type"],
             "mapped_emotion": response_data["mapped_emotion"],
             "model_used": response_data.get("model_used", "unknown"),
+            "all_emotions": response_data.get("all_emotions", []),
+            "secondary_emotions": response_data.get("secondary_emotions", []),
             "user_message": user_message
         })
         
@@ -299,10 +378,10 @@ def health():
     """Health check endpoint"""
     return jsonify({
         "status": "healthy",
-        "model_loaded": emotion_classifier is not None,
-        "hf_available": HF_AVAILABLE,
-        "model_name": "cardiffnlp/twitter-roberta-base-emotion" if HF_AVAILABLE else "keyword-fallback",
-        "supported_emotions": ROBERTA_EMOTIONS if HF_AVAILABLE else list(EMOTION_KEYWORDS.keys())
+        "model_loaded": emotion_model is not None,
+        "tweetnlp_available": TWEETNLP_AVAILABLE,
+        "model_name": "cardiffnlp/twitter-roberta-base-emotion-multilabel-latest" if TWEETNLP_AVAILABLE else "keyword-fallback",
+        "supported_emotions": TWEETNLP_EMOTIONS if TWEETNLP_AVAILABLE else list(EMOTION_KEYWORDS.keys())
     })
 
 @app.route('/api/demo', methods=['GET'])
@@ -323,7 +402,7 @@ def demo_scenarios():
         },
         {
             "name": "Anger Scenario",
-            "input": "I'm so frustrated with my boss, they never listen to my ideas!",
+            "input": "I'm absolutely furious! This is outrageous and unacceptable!",
             "description": "Demonstrating supportive response to anger",
             "expected_emotion": "anger"
         },
@@ -344,19 +423,31 @@ def demo_scenarios():
             "input": "I have such a good feeling about this year, so many possibilities!",
             "description": "Demonstrating encouraging response to optimism",
             "expected_emotion": "optimism"
+        },
+        {
+            "name": "Anticipation Scenario",
+            "input": "I can't wait for my vacation next week! So excited!",
+            "description": "Demonstrating response to anticipation",
+            "expected_emotion": "anticipation"
+        },
+        {
+            "name": "Multi-emotion Scenario",
+            "input": "I'm nervous but excited about starting my new job tomorrow!",
+            "description": "Testing multi-emotion detection",
+            "expected_emotion": "anticipation"
         }
     ]
     
     return jsonify({"scenarios": scenarios})
 
-# Terminal functions (enhanced for Twitter RoBERTa)
+# Terminal functions (enhanced for TweetNLP)
 def print_header():
     """Print chatbot header"""
     print("=" * 70)
-    print("🤖 EMPATHIC CHATBOT - Twitter RoBERTa Enhanced")
+    print("🤖 EMPATHIC CHATBOT - TweetNLP Enhanced")
     print("=" * 70)
     print("💙 I'm here to listen and respond with empathy")
-    print("🔍 Using Twitter RoBERTa for advanced emotion detection")
+    print("🔍 Using TweetNLP for advanced multi-label emotion detection")
     print("🆘 Type 'help' for commands or 'quit' to exit")
     print("=" * 70)
     print()
@@ -374,17 +465,18 @@ def print_help():
     print("  'I feel so overwhelmed with everything'")
     print("  'I just got the best news ever!'")
     print("  'I'm absolutely furious about this situation'")
-    print("  'I'm scared about what might happen'")
+    print("  'I'm scared but excited about tomorrow'")
     print("  'I'm so in love with life right now'")
     print()
 
 def show_supported_emotions():
     """Show supported emotions"""
     print("\n🎭 SUPPORTED EMOTIONS:")
-    if HF_AVAILABLE:
-        print("   Using Twitter RoBERTa model:")
-        for i, emotion in enumerate(ROBERTA_EMOTIONS, 1):
+    if TWEETNLP_AVAILABLE:
+        print("   Using TweetNLP multi-label model:")
+        for i, emotion in enumerate(TWEETNLP_EMOTIONS, 1):
             print(f"   {i:2d}. {emotion.title()}")
+        print("\n   ✨ Multi-label detection: Can detect multiple emotions simultaneously!")
     else:
         print("   Using keyword-based detection:")
         for i, emotion in enumerate(EMOTION_KEYWORDS.keys(), 1):
@@ -397,40 +489,56 @@ def run_demo(templates):
         {
             "name": "Sadness Scenario",
             "input": "I feel so alone and worthless today",
-            "description": "Demonstrating empathic response to sadness"
+            "description": "Demonstrating empathic response to sadness",
+            "expected_emotion": "sadness"
         },
         {
             "name": "Joy Scenario", 
             "input": "I just got accepted to my dream university! I'm over the moon!",
-            "description": "Demonstrating celebratory empathic response"
+            "description": "Demonstrating celebratory empathic response",
+            "expected_emotion": "joy"
         },
         {
             "name": "Anger Scenario",
-            "input": "I'm so frustrated with my boss, they never listen to my ideas!",
-            "description": "Demonstrating supportive response to anger"
+            "input": "I'm absolutely furious! This is outrageous and unacceptable!",
+            "description": "Demonstrating supportive response to anger",
+            "expected_emotion": "anger"
         },
         {
             "name": "Fear Scenario",
             "input": "I'm terrified about my presentation tomorrow, what if I mess up?",
-            "description": "Demonstrating calming response to fear"
+            "description": "Demonstrating calming response to fear",
+            "expected_emotion": "fear"
         },
         {
             "name": "Love Scenario",
             "input": "I'm head over heels in love, everything feels magical!",
-            "description": "Demonstrating warm response to love"
+            "description": "Demonstrating warm response to love",
+            "expected_emotion": "love"
         },
         {
-            "name": "Optimism Scenario",
-            "input": "I have such a good feeling about this year, so many possibilities!",
-            "description": "Demonstrating encouraging response to optimism"
+            "name": "Multi-emotion Scenario",
+            "input": "I'm nervous but excited about starting my new job tomorrow!",
+            "description": "Testing multi-emotion detection",
+            "expected_emotion": "anticipation"
+        },
+        {
+            "name": "Trust Scenario",
+            "input": "I have complete faith that everything will work out perfectly",
+            "description": "Testing trust emotion detection",
+            "expected_emotion": "trust"
         }
     ]
     
-    print("\n🎭 RUNNING DEMO SCENARIOS:")
-    print("=" * 60)
+    print("\n🎭 RUNNING ENHANCED DEMO SCENARIOS:")
+    print("=" * 80)
+    
+    emotion_counts = {}
     
     for i, scenario in enumerate(demo_scenarios, 1):
         print(f"\n{i}. {scenario['name']}")
+        expected = scenario.get('expected_emotion', '')
+        print(f"   Expected: {expected}")
         print(f"   Description: {scenario['description']}")
         print(f"   User Input: \"{scenario['input']}\"")
         
@@ -438,14 +546,38 @@ def run_demo(templates):
         emotion_data = detect_emotion(scenario['input'])
         response_data = select_response(emotion_data, scenario['input'], templates)
         
+        # Track emotion detection
+        primary_emotion = emotion_data['primary_emotion']
+        emotion_counts[primary_emotion] = emotion_counts.get(primary_emotion, 0) + 1
+        
+        # Check if detected matches expected
+        match_indicator = "✅" if primary_emotion == expected else "❓"
+        
         model_info = f" ({emotion_data.get('model', 'unknown')})" if 'model' in emotion_data else ""
-        print(f"   Detected Emotion: {emotion_data['label']} ({emotion_data['score']:.1%} confidence){model_info}")
-        print(f"   Mapped to Template: {response_data.get('mapped_emotion', 'unknown')}")
-        print(f"   Bot Response:")
-        print(f"   💙 {response_data['response']}")
-        print("-" * 60)
+        print(f"   {match_indicator} Primary: {primary_emotion} ({emotion_data['confidence']:.1%} confidence){model_info}")
+        
+        # Show all detected emotions if using TweetNLP
+        if emotion_data.get('all_emotions') and len(emotion_data['all_emotions']) > 1:
+            print(f"   🎭 All emotions detected:")
+            for emotion_info in emotion_data['all_emotions'][:5]:  # Show top 5
+                print(f"      - {emotion_info['label']}: {emotion_info['score']:.1%}")
+        
+        print(f"   🔄 Mapped to template: {response_data.get('mapped_emotion', 'unknown')}")
+        print(f"   💙 Bot Response: {response_data['response'][:120]}...")
+        print("-" * 80)
     
-    print("\n✅ Demo completed! Try typing your own messages now.\n")
+    print(f"\n📊 EMOTION DETECTION SUMMARY:")
+    print("=" * 40)
+    for emotion, count in sorted(emotion_counts.items()):
+        print(f"   {emotion.title()}: {count} detections")
+    
+    print(f"\n🎯 AVAILABLE EMOTIONS IN MODEL:")
+    if TWEETNLP_AVAILABLE:
+        print("   TweetNLP emotions:", TWEETNLP_EMOTIONS)
+    else:
+        print("   Keyword emotions:", list(EMOTION_KEYWORDS.keys()))
+    
+    print("\n✅ Enhanced demo completed! Multi-emotion detection is now active.\n")
 
 def clear_screen():
     """Clear terminal screen"""
@@ -460,8 +592,9 @@ def main():
     # clear_screen() # remove for debugging
     print_header()
     
-    if HF_AVAILABLE:
-        print("🤖 Hello! I'm an empathic chatbot powered by Twitter RoBERTa emotion detection.")
+    if TWEETNLP_AVAILABLE:
+        print("🤖 Hello! I'm an empathic chatbot powered by TweetNLP multi-label emotion detection.")
+        print("   I can detect multiple emotions in your messages simultaneously!")
     else:
         print("🤖 Hello! I'm an empathic chatbot using keyword-based emotion detection.")
     
@@ -517,16 +650,23 @@ def main():
             emotion_data = detect_emotion(user_input)
             
             # Update stats
-            emotion = emotion_data['label']
-            emotion_stats[emotion] = emotion_stats.get(emotion, 0) + 1
+            primary_emotion = emotion_data['primary_emotion']
+            emotion_stats[primary_emotion] = emotion_stats.get(primary_emotion, 0) + 1
             
             # Generate response
             response_data = select_response(emotion_data, user_input, templates)
             
             # Display response with enhanced emotion info
             model_info = f" ({emotion_data.get('model', 'unknown')})" if 'model' in emotion_data else ""
-            print(f"\n🔍 Detected: {emotion_data['label']} ({emotion_data['score']:.1%} confidence){model_info}")
-            if response_data.get('mapped_emotion') != emotion_data['label']:
+            print(f"\n🔍 Primary: {primary_emotion} ({emotion_data['confidence']:.1%} confidence){model_info}")
+            
+            # Show all emotions if multiple detected
+            if emotion_data.get('all_emotions') and len(emotion_data['all_emotions']) > 1:
+                print(f"🎭 All emotions detected:")
+                for emotion_info in emotion_data['all_emotions'][:3]:
+                    print(f"   - {emotion_info['label']}: {emotion_info['score']:.1%}")
+            
+            if response_data.get('mapped_emotion') != primary_emotion:
                 print(f"🔄 Mapped to: {response_data.get('mapped_emotion', 'unknown')}")
             
             if response_data['type'] == 'crisis_intervention':
