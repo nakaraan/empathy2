@@ -1,5 +1,3 @@
-import torch
-import json
 import random
 import os
 
@@ -333,7 +331,7 @@ def run_demo():
             for alt_emotion in response_data['alternative_emotions'][:2]:
                 print(f"  - {alt_emotion['label']}: {alt_emotion['score']:.1%}")
         
-        print(f"Response: {response_data['response'][:100]}...")
+        print(f"Response: {response_data['response']}...")
         print("-" * 40)
     
     print("\n✅ Demo completed! Try your own messages now.\n")
